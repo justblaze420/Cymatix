@@ -143,3 +143,34 @@ html  {
     .keys:hover .hints {
       opacity: 1;
     }
+
+    @keyframes glowFlow {
+      0%, 100% {
+        box-shadow: 0 0 10px rgba(0, 255, 255, 0.2), 0 0 20px rgba(255, 0, 255, 0.2);
+      }
+      50% {
+        box-shadow: 0 0 15px rgba(255, 255, 255, 0.1), 0 0 25px rgba(0, 255, 255, 0.15);
+      }
+    }
+
+    .glass {
+      background: rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      animation: glowFlow 8s ease-in-out infinite;
+    }
+
+    .title-gradient {
+      background: linear-gradient(90deg, #99f6e4, #f0abfc, #99f6e4);
+      background-size: 200% auto;
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      animation: gradientMove 10s linear infinite;
+    }
+
+    @keyframes gradientMove {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 200% 50%; }
+    }
