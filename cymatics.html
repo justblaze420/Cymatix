@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Cymatix</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background: black;
+      overflow: hidden;
+      margin: 0;
+      padding: 0;
+    }
+    .custom-navbar {
+      background-image: url('Views/navbar.jpg');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: left center;
+      background-color: rgba(0, 0, 0, 0.8);
+      border-radius: 22px;
+      padding: 10px 20px;
+      margin: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: white;
+    }
+    .nav-buttons {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn {
+      border-radius: 50px;
+      font-size: 20px;
+      padding: 5px 12px;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    .file-label {
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+<nav class="custom-navbar">
+    <div class="brand">
+      <!-- Imagen como fondo ya puesta en CSS -->
+    </div>
+
+    <div class="nav-buttons">
+      <button class="btn btn-outline-light" onclick="playAudio()">▶</button>
+      <button class="btn btn-outline-light" onclick="pauseAudio()">⏸</button>
+      <button class="btn btn-outline-light" onclick="stopAudio()">⏹</button>
+      <button class="btn btn-outline-light" onclick="startMic()">🎤</button>
+
+      <label for="fileInput" class="btn btn-outline-light file-label">📁</label>
+      <input type="file" id="fileInput" accept=".mp3" onchange="handleFile(this.files[0])">
+    </div>
+  </nav>
+  <canvas id="canvas"></canvas>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const msg = document.getElementById('msg');
+    resizeCanvas();
+
+    window.addEventListener('resize', resizeCanvas);
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+
+    navigator.mediaDevices.getUserMedia({ audio: true, video: false }).then(stream => {
+      msg.style.display = 'none';
+
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const source = audioCtx.createMediaStreamSource(stream);
+      const analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 256;
+
+      source.connect(analyser);
+      const bufferLength = analyser.frequencyBinCount;
+      const dataArray = new Uint8Array(bufferLength);
+
+      const cx = canvas.width / 2;
+      const cy = canvas.height / 2;
+      const radius = Math.min(cx, cy) * 0.5;
+      const rings = 100;
+
+      function animate() {
+        analyser.getByteFrequencyData(dataArray);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        for (let i = 0; i < rings; i++) {
+          const angleStep = (Math.PI * 2) / bufferLength;
+          const r = radius * (i / rings);
+          ctx.beginPath();
+          for (let j = 0; j < bufferLength; j++) {
+            const angle = j * angleStep;
+            const amp = dataArray[j] / 255;
+            const offset = amp * 50 * Math.sin(i * 0.3 + j * 0.2);
+            const x = cx + (r + offset) * Math.cos(angle);
+            const y = cy + (r + offset) * Math.sin(angle);
+            if (j === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          }
+          ctx.closePath();
+          const hue = (i * 3 + Date.now() * 0.05) % 360;
+          ctx.strokeStyle = `hsl(${hue}, 100%, 50%)`;
+          ctx.lineWidth = 0.5;
+          ctx.stroke();
+        }
+
+        requestAnimationFrame(animate);
+      }
+
+      animate();
+    }).catch(err => {
+      msg.innerText = "❌ No se pudo acceder al micrófono";
+      console.error(err);
+    });
+  </script>
+</body>
+</html>
